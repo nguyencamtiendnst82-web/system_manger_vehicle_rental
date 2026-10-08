@@ -1,0 +1,275 @@
+-- =====================================================
+-- DATABASE: QUAN LY CHO THUE XE
+-- =====================================================
+
+CREATE DATABASE IF NOT EXISTS quan_ly_cho_thue_xe
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+USE quan_ly_cho_thue_xe;
+
+
+-- =====================================================
+-- 1. BẢNG LOẠI XE
+-- =====================================================
+
+CREATE TABLE LOAI_XE (
+    maLoaiXe INT AUTO_INCREMENT PRIMARY KEY,
+    tenLoaiXe VARCHAR(100) NOT NULL,
+    hangXe VARCHAR(100) NOT NULL
+    
+);
+
+
+-- =====================================================
+-- 2. BẢNG XE
+-- =====================================================
+
+CREATE TABLE XE (
+    maXe INT AUTO_INCREMENT PRIMARY KEY,
+    maLoaiXe INT NOT NULL,
+    bienSoXe VARCHAR(20) NOT NULL UNIQUE,
+    mauXe VARCHAR(50),
+    soKmDaChay INT DEFAULT 0,
+    trangThai ENUM(
+    	'SAN_SANG',
+    	'DANG_THUE',
+    	'DANG_BAO_TRI',
+    	'NGUNG_HOAT_DONG'
+     ) DEFAULT 'SAN_SANG',
+    soCho INT NOT NULL
+
+    CONSTRAINT fk_xe_loaixe
+        FOREIGN KEY (maLoaiXe)
+        REFERENCES LOAI_XE(maLoaiXe)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- =====================================================
+-- 3. BẢNG NHÂN VIÊN
+-- =====================================================
+
+CREATE TABLE NHAN_VIEN (
+    maNV INT AUTO_INCREMENT PRIMARY KEY,
+    hoTen VARCHAR(100) NOT NULL,
+    SDT VARCHAR(15),
+    email VARCHAR(100)
+);
+
+
+-- =====================================================
+-- 4. BẢNG KHÁCH HÀNG
+-- =====================================================
+
+CREATE TABLE KHACH_HANG (
+    maKH INT AUTO_INCREMENT PRIMARY KEY,
+    hoTen VARCHAR(100) NOT NULL,
+    SDT VARCHAR(15),
+    email VARCHAR(100),
+    CCCD VARCHAR(20) UNIQUE,
+    bangLai VARCHAR(20),
+    diaChi VARCHAR(255)
+);
+
+
+-- =====================================================
+-- 5. BẢNG HỢP ĐỒNG
+-- =====================================================
+
+CREATE TABLE HOP_DONG (
+    maHD INT AUTO_INCREMENT PRIMARY KEY,
+
+    maKH INT NOT NULL,
+    maXe INT NOT NULL,
+    maNV INT NOT NULL,
+
+    ngayThue DATETIME NOT NULL,
+    ngayTra DATETIME NOT NULL,
+    ngayTraThucTe DATETIME,
+
+    tienThue DECIMAL(15,2) DEFAULT 0,
+
+    trangThai ENUM(
+    	'CHO_XAC_NHAN',
+    	'DA_XAC_NHAN',
+    	'DANG_THUE',
+    	'DA_TRA',
+    	'DA_HUY'
+     ) DEFAULT 'CHO_XAC_NHAN',
+
+    CONSTRAINT fk_hd_khachhang
+        FOREIGN KEY (maKH)
+        REFERENCES KHACH_HANG(maKH)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_hd_xe
+        FOREIGN KEY (maXe)
+        REFERENCES XE(maXe)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_hd_nhanvien
+        FOREIGN KEY (maNV)
+        REFERENCES NHAN_VIEN(maNV)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- =====================================================
+-- 6. BẢNG THANH TOÁN
+-- =====================================================
+
+CREATE TABLE THANH_TOAN (
+    maTT INT AUTO_INCREMENT PRIMARY KEY,
+
+    maHD INT NOT NULL,
+    soTien DECIMAL(15,2) NOT NULL,
+    phuongThuc ENUM(
+    	'TIEN_MAT',
+    	'CHUYEN_KHOAN',
+    	'THE'
+    ) NOT NULL,
+    ngayTT DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_tt_hopdong
+        FOREIGN KEY (maHD)
+        REFERENCES HOP_DONG(maHD)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- =====================================================
+-- 7. BẢNG BẢO TRÌ
+-- =====================================================
+
+CREATE TABLE BAO_TRI (
+    maBT INT AUTO_INCREMENT PRIMARY KEY,
+
+    maXe INT NOT NULL,
+    noiDung TEXT,
+    ngayBatDau DATE,
+    ngayKetThuc DATE,
+    chiPhi DECIMAL(15,2) DEFAULT 0,
+    trangThai ENUM(
+    	'CHO_BAO_TRI',
+    	'DANG_BAO_TRI',
+    	'DA_HOAN_THANH'
+     ) DEFAULT 'CHO_BAO_TRI',
+
+    CONSTRAINT fk_bt_xe
+        FOREIGN KEY (maXe)
+        REFERENCES XE(maXe)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+
+-- =====================================================
+-- 8. BẢNG TÌNH TRẠNG KHI TRẢ XE
+-- =====================================================
+
+CREATE TABLE TINH_TRANG_TRA_XE (
+    maTinhTrang INT AUTO_INCREMENT PRIMARY KEY,
+
+    maHD INT NOT NULL,
+
+    ngayTra DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    tinhTrangXe TEXT,
+    mucNhienLieu INT,
+    soKmThucTe INT,
+    ghiChu TEXT,
+
+    CONSTRAINT fk_tttx_hopdong
+        FOREIGN KEY (maHD)
+        REFERENCES HOP_DONG(maHD)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT
+);
+
+--------------------------------------------------
+INSERT INTO nhan_vien (maNV, hoTen, SDT, email) VALUES
+(1, 'Nguyen Van An', '0905123456', 'an@gmail.com'),
+(2, 'Tran Thi Binh', '0915234567', 'binh@gmail.com'),
+(3, 'Le Van Cuong', '0925345678', 'cuong@gmail.com'),
+(4, 'Pham Thi Dung', '0935456789', 'dung@gmail.com'),
+(5, 'Hoang Van Nam', '0945567890', 'nam@gmail.com');
+
+INSERT INTO khach_hang
+(maKH, hoTen, SDT, email, CCCD, bangLai, diaChi) VALUES
+(1, 'Nguyen Minh Anh', '0901111111', 'anh@gmail.com', '201234567890', 'B2', 'Da Nang'),
+(2, 'Tran Van Binh', '0902222222', 'binhkh@gmail.com', '201234567891', 'B2', 'Quang Nam'),
+(3, 'Le Thi Hoa', '0903333333', 'hoa@gmail.com', '201234567892', 'B1', 'Hue'),
+(4, 'Pham Van Long', '0904444444', 'long@gmail.com', '201234567893', 'B2', 'Da Nang'),
+(5, 'Hoang Thi Mai', '0905555555', 'mai@gmail.com', '201234567894', 'B1', 'Quang Ngai');
+
+INSERT INTO loai_xe (maLoaiXe, tenLoaiXe, hangXe) VALUES
+(1, 'Xe 4 cho', 'Toyota'),
+(2, 'Xe 5 cho', 'Honda'),
+(3, 'Xe 7 cho', 'Mitsubishi'),
+(4, 'Xe SUV', 'Hyundai'),
+(5, 'Xe Sedan', 'Mazda');
+
+INSERT INTO xe
+(maXe, maLoaiXe, bienSoXe, mauXe, soKmDaChay, trangThai, soCho)
+VALUES
+(1, 1, '43A-12345', 'Trang', 25000, 'SAN_SANG', 4),
+(2, 2, '43A-23456', 'Den', 18000, 'DANG_THUE', 5),
+(3, 3, '43A-34567', 'Xam', 32000, 'SAN_SANG', 7),
+(4, 4, '43A-45678', 'Do', 15000, 'DANG_BAO_TRI', 7),
+(5, 5, '43A-56789', 'Xanh', 22000, 'SAN_SANG', 5),
+(6, 1, '43A-67890', 'Bac', 28000, 'SAN_SANG', 4),
+(7, 2, '43A-78901', 'Trang', 12000, 'DANG_THUE', 5),
+(8, 3, '43A-89012', 'Den', 35000, 'SAN_SANG', 7);
+
+INSERT INTO hop_dong
+(maHD, maKH, maXe, maNV, ngayThue, ngayTra, ngayTraThucTe, tienThue, trangThai)
+VALUES
+(1, 1, 2, 1, '2026-09-01', '2026-09-05', '2026-09-05', 2000000, 'DA_TRA'),
+(2, 2, 3, 2, '2026-09-03', '2026-09-07', '2026-09-07', 2800000, 'DA_TRA'),
+(3, 3, 1, 3, '2026-09-05', '2026-09-08', '2026-09-08', 1500000, 'DA_TRA'),
+(4, 4, 5, 4, '2026-09-08', '2026-09-12', '2026-09-12', 2200000, 'DA_TRA'),
+(5, 5, 7, 5, '2026-09-10', '2026-09-15', '2026-09-15', 2500000, 'DA_TRA'),
+(6, 1, 6, 1, '2026-09-15', '2026-09-18', NULL, 1800000, 'DANG_THUE'),
+(7, 2, 3, 2, '2026-09-20', '2026-09-25', NULL, 3500000, 'DANG_THUE'),
+(8, 4, 8, 3, '2026-09-22', '2026-09-27', NULL, 3200000, 'DANG_THUE');
+
+INSERT INTO thanh_toan
+(maTT, maHD, soTien, phuongThuc, ngayTT)
+VALUES
+(1, 1, 2000000, 'TIEN_MAT', '2026-09-05'),
+(2, 2, 2800000, 'CHUYEN_KHOAN', '2026-09-07'),
+(3, 3, 1500000, 'TIEN_MAT', '2026-09-08'),
+(4, 4, 2200000, 'CHUYEN_KHOAN', '2026-09-12'),
+(5, 5, 2500000, 'CHUYEN_KHOAN', '2026-09-15'),
+(6, 6, 1800000, 'CHUYEN_KHOAN', '2026-09-15'),
+(7, 7, 3500000, 'TIEN_MAT', '2026-09-20'),
+(8, 8, 3200000, 'CHUYEN_KHOAN', '2026-09-22');
+
+INSERT INTO tinh_trang_tra_xe
+(maTinhTrang, maHD, ngayTra, tinhTrangXe, mucNhienLieu, soKmThucTe, ghiChu)
+VALUES
+(1, 1, '2026-09-05', 'Tot', 80, 25300, 'Xe hoat dong binh thuong'),
+(2, 2, '2026-09-07', 'Tot', 70, 32600, 'Khong co hu hong'),
+(3, 3, '2026-09-08', 'Tot', 75, 25400, 'Xe sach se'),
+(4, 4, '2026-09-12', 'Tot', 60, 22500, 'Khong co van de'),
+(5, 5, '2026-09-15', 'Kha', 50, 12800, 'Xuat hien vet xuoc nho'),
+(6, 6, '2026-09-18', 'Tot', 70, 28600, 'Xe binh thuong'),
+(7, 7, '2026-09-25', 'Tot', 65, 33800, 'Khong co hu hong'),
+(8, 8, '2026-09-27', 'Kha', 55, 36200, 'Can kiem tra lop xe');
+
+INSERT INTO bao_tri
+(maBT, maXe, noiDung, ngayBatDau, ngayKetThuc, chiPhi, trangThai)
+VALUES
+(1, 4, 'Thay dau dong co', '2026-09-02', '2026-09-03', 800000, 'DA_HOAN_THANH'),
+(2, 1, 'Kiem tra phanh', '2026-08-20', '2026-08-21', 500000, 'DA_HOAN_THANH'),
+(3, 3, 'Thay lop xe', '2026-08-25', '2026-08-26', 2500000, 'DA_HOAN_THANH'),
+(4, 5, 'Bao duong dinh ky', '2026-09-16', '2026-09-17', 1200000, 'DA_HOAN_THANH'),
+(5, 7, 'Kiem tra dong co', '2026-09-18', '2026-09-19', 600000, 'DA_HOAN_THANH'),
+(6, 2, 'Thay loc gio', '2026-08-28', '2026-08-28', 350000, 'DA_HOAN_THANH'),
+(7, 6, 'Kiem tra ac quy', '2026-09-10', '2026-09-10', 400000, 'DA_HOAN_THANH'),
+(8, 8, 'Bao duong tong quat', '2026-09-28', NULL, 1000000, 'DANG_BAO_TRI');
