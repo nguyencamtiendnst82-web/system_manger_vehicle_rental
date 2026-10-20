@@ -12,10 +12,13 @@
     "@prisma/engines@7.10.1": true
   },
   "devDependencies": {
+    "jest": "^30.5.2",
     "prisma": "^7.10.1"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
-  }
-  
+  },
+  "scripts": {
+  "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
+}
 }
