@@ -1,7 +1,8 @@
-// chucnang.js - Các chức năng của hệ thống quản lý cho thuê xe
-// Phần 1: CRUD cơ bản cho 8 bảng
-// Phần 2: Nghiệp vụ (đặt xe, giao xe, trả xe, thanh toán, bảo trì)
-// Phần 3: Thống kê
+// chucnang.js - Nghiệp vụ và thống kê của hệ thống quản lý cho thuê xe.
+// CRUD của từng bảng đã được tách ra thư mục crud/ (xem crud/index.js).
+//
+// Phần 1: Nghiệp vụ (đặt xe, giao xe, trả xe, thanh toán, bảo trì)
+// Phần 2: Thống kê
 //
 // Lưu ý: tên model (xe, hop_dong, khach_hang...) và tên quan hệ trong include
 // phải khớp với prisma/schema.prisma sau khi chạy `npx prisma db pull`.
@@ -12,71 +13,7 @@ import { prisma } from "./prismaClient.js";
 const HD_DANG_GIU_XE = ["CHO_XAC_NHAN", "DA_XAC_NHAN", "DANG_THUE"];
 
 // =====================================================
-// PHẦN 1: CRUD CƠ BẢN
-// =====================================================
-// Hàm tạo sẵn 5 thao tác cho một bảng:
-//   tao (Create), layTatCa / layTheoMa (Read), capNhat (Update), xoa (Delete)
-function taoCrud(model, khoaChinh) {
-  return {
-    tao: (data) => prisma[model].create({ data }),
-    layTatCa: (tuyChon = {}) => prisma[model].findMany(tuyChon),
-    layTheoMa: (ma, tuyChon = {}) =>
-      prisma[model].findUnique({ where: { [khoaChinh]: ma }, ...tuyChon }),
-    capNhat: (ma, data) =>
-      prisma[model].update({ where: { [khoaChinh]: ma }, data }),
-    xoa: (ma) => prisma[model].delete({ where: { [khoaChinh]: ma } }),
-  };
-}
-
-export const loaiXe = taoCrud("loai_xe", "maLoaiXe");
-export const xe = taoCrud("xe", "maXe");
-export const nhanVien = taoCrud("nhan_vien", "maNV");
-export const khachHang = taoCrud("khach_hang", "maKH");
-export const hopDong = taoCrud("hop_dong", "maHD");
-export const thanhToan = taoCrud("thanh_toan", "maTT");
-export const baoTri = taoCrud("bao_tri", "maBT");
-export const tinhTrangTraXe = taoCrud("tinh_trang_tra_xe", "maTinhTrang");
-
-// Một số chức năng đọc hay dùng
-export function timXeTheoBienSo(bienSoXe) {
-  return prisma.xe.findUnique({ where: { bienSoXe }, include: { loai_xe: true } });
-}
-
-export function timKhachHangTheoCCCD(CCCD) {
-  return prisma.khach_hang.findUnique({ where: { CCCD } });
-}
-
-export function danhSachXe(trangThai) {
-  return prisma.xe.findMany({
-    where: trangThai ? { trangThai } : undefined,
-    include: { loai_xe: true },
-    orderBy: { maXe: "asc" },
-  });
-}
-
-export function chiTietHopDong(maHD) {
-  return prisma.hop_dong.findUnique({
-    where: { maHD },
-    include: {
-      khach_hang: true,
-      xe: true,
-      nhan_vien: true,
-      thanh_toan: true,
-      tinh_trang_tra_xe: true,
-    },
-  });
-}
-
-export function hopDongCuaKhach(maKH) {
-  return prisma.hop_dong.findMany({
-    where: { maKH },
-    include: { xe: true },
-    orderBy: { ngayThue: "desc" },
-  });
-}
-
-// =====================================================
-// PHẦN 2: NGHIỆP VỤ
+// PHẦN 1: NGHIỆP VỤ
 // =====================================================
 
 // Kiểm tra xe có bị trùng lịch trong khoảng [tu, den) không
@@ -93,7 +30,7 @@ async function xeBiTrungLich(tx, maXe, tu, den, boQuaMaHD) {
   return trung !== null;
 }
 
-// Tìm các xe có thể thuê trong khoảng thời gian (xe sẵn sàng và không trùng lịch)
+// Tìm các xe có thể thuê trong khoảng thời gian (không bảo trì và không trùng lịch)
 export async function timXeCoTheThue(ngayThue, ngayTra) {
   const tu = new Date(ngayThue);
   const den = new Date(ngayTra);
@@ -282,7 +219,7 @@ export async function hoanThanhBaoTri(maBT, chiPhi) {
 }
 
 // =====================================================
-// PHẦN 3: THỐNG KÊ
+// PHẦN 2: THỐNG KÊ
 // =====================================================
 
 // Số xe theo từng trạng thái
