@@ -192,6 +192,8 @@ CREATE TABLE TINH_TRANG_TRA_XE (
 );
 
 --------------------------------------------------
+--Dữ liệu
+--------------------------------------------------
 INSERT INTO nhan_vien (maNV, hoTen, SDT, email) VALUES
 (1, 'Nguyen Van An', '0905123456', 'an@gmail.com'),
 (2, 'Tran Thi Binh', '0915234567', 'binh@gmail.com'),
