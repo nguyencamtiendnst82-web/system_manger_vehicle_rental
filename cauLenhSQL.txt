@@ -191,17 +191,17 @@ CREATE TABLE TINH_TRANG_TRA_XE (
         ON DELETE RESTRICT
 );
 
---------------------------------------------------
---Dữ liệu
---------------------------------------------------
-INSERT INTO nhan_vien (maNV, hoTen, SDT, email) VALUES
-(1, 'Nguyen Van An', '0905123456', 'an@gmail.com'),
-(2, 'Tran Thi Binh', '0915234567', 'binh@gmail.com'),
-(3, 'Le Van Cuong', '0925345678', 'cuong@gmail.com'),
-(4, 'Pham Thi Dung', '0935456789', 'dung@gmail.com'),
-(5, 'Hoang Van Nam', '0945567890', 'nam@gmail.com');
+        --------------------------------------------------
+        --Dữ liệu
+        --------------------------------------------------
+            INSERT INTO nhan_vien (maNV, hoTen, SDT, email) VALUES
+            (1, 'Nguyen Van An', '0905123456', 'an@gmail.com'),
+            (2, 'Tran Thi Binh', '0915234567', 'binh@gmail.com'),
+            (3, 'Le Van Cuong', '0925345678', 'cuong@gmail.com'),
+            (4, 'Pham Thi Dung', '0935456789', 'dung@gmail.com'),
+            (5, 'Hoang Van Nam', '0945567890', 'nam@gmail.com');
 
-INSERT INTO khach_hang
+            INSERT INTO khach_hang
 (maKH, hoTen, SDT, email, CCCD, bangLai, diaChi) VALUES
 (1, 'Nguyen Minh Anh', '0901111111', 'anh@gmail.com', '201234567890', 'B2', 'Da Nang'),
 (2, 'Tran Van Binh', '0902222222', 'binhkh@gmail.com', '201234567891', 'B2', 'Quang Nam'),
