@@ -1,41 +1,51 @@
-import mysql from 'mysql2';
-import dotenv from 'dotenv';
+// db.js - Kiểm tra kết nối CSDL và đọc thử bảng bao_tri
+//
+// Dùng chung kết nối Prisma trong prismaClient.js (đọc DATABASE_URL trong .env),
+// nên không cần mysql2 và các biến DB_HOST, DB_USER, DB_PASSWORD, DB_NAME nữa.
+//
+// Chạy bằng: node src/db.js
+import { prisma } from "./prismaClient.js";
+import { baoTri } from "./crud/index.js";
 
-dotenv.config();
+// =====================================================
+// KIỂM TRA
+// =====================================================
 
-const connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
-});
+// Thử kết nối bằng một truy vấn đơn giản
+async function checkConnection() {
+  console.log("Đang kết nối MySQL...");
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (e) {
+    throw new Error(`Kết nối thất bại: ${e.message}`);
+  }
+  console.log("Kết nối MySQL thành công!");
+}
 
-console.log('Dang ket noi MySQL...');
+// Đọc toàn bộ bảng bao_tri
+async function showMaintenance() {
+  let rows;
+  try {
+    rows = await baoTri.getAll();
+  } catch (e) {
+    throw new Error(`Lỗi truy vấn: ${e.message}`);
+  }
+  console.log("Dữ liệu bảng bao_tri:");
+  console.log(rows);
+}
 
-connection.connect(function(error) {
+// =====================================================
+// CHẠY
+// =====================================================
 
-    if (error) {
-        console.log('Ket noi that bai!');
-        console.log(error.message);
-        return;
-    }
+async function main() {
+  await checkConnection();
+  await showMaintenance();
+}
 
-    console.log('Ket noi MySQL thanh cong!');
-
-    const sql = 'SELECT * FROM bao_tri';
-
-    connection.query(sql, function(error, results) {
-
-        if (error) {
-            console.log('Loi truy van!');
-            console.log(error.message);
-            return;
-        }
-
-        console.log('Du lieu bang bao_tri:');
-
-        console.log(results);
-
-        connection.end();
-    });
-});
+main()
+  .catch((e) => {
+    console.error(e.message);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());
