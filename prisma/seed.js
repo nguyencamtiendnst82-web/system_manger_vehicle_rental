@@ -1,6 +1,6 @@
-// seed.js - Nạp dữ liệu mẫu cho 8 bảng của hệ thống quản lý cho thuê xe
+// seed.js - Nạp dữ liệu mẫu cho 9 bảng của hệ thống quản lý cho thuê xe
 //
-// CẢNH BÁO: file này XÓA TOÀN BỘ dữ liệu hiện có trong 8 bảng rồi nạp lại từ đầu.
+// CẢNH BÁO: file này XÓA TOÀN BỘ dữ liệu hiện có trong 9 bảng rồi nạp lại từ đầu.
 // Chỉ chạy trên CSDL dùng để thử nghiệm.
 //
 // Chạy bằng: node prisma/seed.js
@@ -8,9 +8,12 @@
 // Phần 1: Dữ liệu mẫu (bảng cha trước, bảng con sau)
 // Phần 2: Nạp dữ liệu (xóa theo thứ tự ngược của khóa ngoại, rồi thêm lại)
 //
-// Lưu ý: dùng chung kết nối trong src/prismaClient.js. Nếu file này không nằm
-// trong thư mục prisma/ thì sửa lại đường dẫn import bên dưới cho đúng.
-import { prisma } from "../src/prismaClient.js";
+// Chỉ seed database kiểm thử riêng: cần TEST_DATABASE_URL và xác nhận rõ ràng.
+import "dotenv/config";
+import { getIsolatedTestDatabaseUrl } from "../src/testDatabaseSafety.js";
+
+process.env.DATABASE_URL = getIsolatedTestDatabaseUrl();
+const { prisma } = await import("../src/prismaClient.js");
 
 // Rút gọn: tạo đối tượng Date từ chuỗi "YYYY-MM-DD"
 const d = (s) => new Date(s);
@@ -36,33 +39,34 @@ const khachHangData = [
 ];
 
 const loaiXeData = [
-  { maLoaiXe: 1, tenLoaiXe: "Xe 4 cho", hangXe: "Toyota" },
-  { maLoaiXe: 2, tenLoaiXe: "Xe 5 cho", hangXe: "Honda" },
-  { maLoaiXe: 3, tenLoaiXe: "Xe 7 cho", hangXe: "Mitsubishi" },
-  { maLoaiXe: 4, tenLoaiXe: "Xe SUV", hangXe: "Hyundai" },
-  { maLoaiXe: 5, tenLoaiXe: "Xe Sedan", hangXe: "Mazda" },
+  { maLoaiXe: 1, tenLoaiXe: "Xe 4 cho", hangXe: "Toyota", giaThueNgay: 500000 },
+  { maLoaiXe: 2, tenLoaiXe: "Xe 5 cho", hangXe: "Honda", giaThueNgay: 500000 },
+  { maLoaiXe: 3, tenLoaiXe: "Xe 7 cho", hangXe: "Mitsubishi", giaThueNgay: 700000 },
+  { maLoaiXe: 4, tenLoaiXe: "Xe SUV", hangXe: "Hyundai", giaThueNgay: 900000 },
+  { maLoaiXe: 5, tenLoaiXe: "Xe Sedan", hangXe: "Mazda", giaThueNgay: 550000 },
 ];
 
 const xeData = [
-  { maXe: 1, maLoaiXe: 1, bienSoXe: "43A-12345", mauXe: "Trang", soKmDaChay: 25000, trangThai: "SAN_SANG", soCho: 4 },
-  { maXe: 2, maLoaiXe: 2, bienSoXe: "43A-23456", mauXe: "Den", soKmDaChay: 18000, trangThai: "DANG_THUE", soCho: 5 },
-  { maXe: 3, maLoaiXe: 3, bienSoXe: "43A-34567", mauXe: "Xam", soKmDaChay: 32000, trangThai: "SAN_SANG", soCho: 7 },
-  { maXe: 4, maLoaiXe: 4, bienSoXe: "43A-45678", mauXe: "Do", soKmDaChay: 15000, trangThai: "DANG_BAO_TRI", soCho: 7 },
-  { maXe: 5, maLoaiXe: 5, bienSoXe: "43A-56789", mauXe: "Xanh", soKmDaChay: 22000, trangThai: "SAN_SANG", soCho: 5 },
-  { maXe: 6, maLoaiXe: 1, bienSoXe: "43A-67890", mauXe: "Bac", soKmDaChay: 28000, trangThai: "SAN_SANG", soCho: 4 },
-  { maXe: 7, maLoaiXe: 2, bienSoXe: "43A-78901", mauXe: "Trang", soKmDaChay: 12000, trangThai: "DANG_THUE", soCho: 5 },
-  { maXe: 8, maLoaiXe: 3, bienSoXe: "43A-89012", mauXe: "Den", soKmDaChay: 35000, trangThai: "SAN_SANG", soCho: 7 },
+  { maXe: 1, maLoaiXe: 1, bienSoXe: "43A-12345", mauXe: "Trang", soKmDaChay: 25400, trangThai: "SAN_SANG", soCho: 4 },
+  { maXe: 2, maLoaiXe: 2, bienSoXe: "43A-23456", mauXe: "Den", soKmDaChay: 18300, trangThai: "SAN_SANG", soCho: 5 },
+  { maXe: 3, maLoaiXe: 3, bienSoXe: "43A-34567", mauXe: "Xam", soKmDaChay: 32600, trangThai: "DANG_THUE", soCho: 7 },
+  { maXe: 4, maLoaiXe: 4, bienSoXe: "43A-45678", mauXe: "Do", soKmDaChay: 15000, trangThai: "SAN_SANG", soCho: 7 },
+  { maXe: 5, maLoaiXe: 5, bienSoXe: "43A-56789", mauXe: "Xanh", soKmDaChay: 22500, trangThai: "SAN_SANG", soCho: 5 },
+  { maXe: 6, maLoaiXe: 1, bienSoXe: "43A-67890", mauXe: "Bac", soKmDaChay: 28600, trangThai: "SAN_SANG", soCho: 4 },
+  { maXe: 7, maLoaiXe: 2, bienSoXe: "43A-78901", mauXe: "Trang", soKmDaChay: 12800, trangThai: "SAN_SANG", soCho: 5 },
+  { maXe: 8, maLoaiXe: 3, bienSoXe: "43A-89012", mauXe: "Den", soKmDaChay: 35000, trangThai: "DANG_BAO_TRI", soCho: 7 },
 ];
 
 const hopDongData = [
-  { maHD: 1, maKH: 1, maXe: 2, maNV: 1, ngayThue: d("2026-09-01"), ngayTra: d("2026-09-05"), ngayTraThucTe: d("2026-09-05"), tienThue: 2000000, trangThai: "DA_TRA" },
-  { maHD: 2, maKH: 2, maXe: 3, maNV: 2, ngayThue: d("2026-09-03"), ngayTra: d("2026-09-07"), ngayTraThucTe: d("2026-09-07"), tienThue: 2800000, trangThai: "DA_TRA" },
-  { maHD: 3, maKH: 3, maXe: 1, maNV: 3, ngayThue: d("2026-09-05"), ngayTra: d("2026-09-08"), ngayTraThucTe: d("2026-09-08"), tienThue: 1500000, trangThai: "DA_TRA" },
-  { maHD: 4, maKH: 4, maXe: 5, maNV: 4, ngayThue: d("2026-09-08"), ngayTra: d("2026-09-12"), ngayTraThucTe: d("2026-09-12"), tienThue: 2200000, trangThai: "DA_TRA" },
-  { maHD: 5, maKH: 5, maXe: 7, maNV: 5, ngayThue: d("2026-09-10"), ngayTra: d("2026-09-15"), ngayTraThucTe: d("2026-09-15"), tienThue: 2500000, trangThai: "DA_TRA" },
-  { maHD: 6, maKH: 1, maXe: 6, maNV: 1, ngayThue: d("2026-09-15"), ngayTra: d("2026-09-18"), ngayTraThucTe: null, tienThue: 1800000, trangThai: "DANG_THUE" },
-  { maHD: 7, maKH: 2, maXe: 3, maNV: 2, ngayThue: d("2026-09-20"), ngayTra: d("2026-09-25"), ngayTraThucTe: null, tienThue: 3500000, trangThai: "DANG_THUE" },
-  { maHD: 8, maKH: 4, maXe: 8, maNV: 3, ngayThue: d("2026-09-22"), ngayTra: d("2026-09-27"), ngayTraThucTe: null, tienThue: 3200000, trangThai: "DANG_THUE" },
+  { maHD: 1, maKH: 1, maXe: 2, maNV: 1, ngayThue: d("2026-09-01"), ngayTra: d("2026-09-05"), ngayTraThucTe: d("2026-09-05"), tienThue: 2000000, trangThai: "DA_TRA", phiTraTre: 0 },
+  { maHD: 2, maKH: 2, maXe: 3, maNV: 2, ngayThue: d("2026-09-03"), ngayTra: d("2026-09-07"), ngayTraThucTe: d("2026-09-07"), tienThue: 2800000, trangThai: "DA_TRA", phiTraTre: 0 },
+  { maHD: 3, maKH: 3, maXe: 1, maNV: 3, ngayThue: d("2026-09-05"), ngayTra: d("2026-09-08"), ngayTraThucTe: d("2026-09-09"), tienThue: 1500000, trangThai: "DA_TRA", phiTraTre: 750000 },
+  { maHD: 4, maKH: 4, maXe: 5, maNV: 4, ngayThue: d("2026-09-08"), ngayTra: d("2026-09-12"), ngayTraThucTe: d("2026-09-12"), tienThue: 2200000, trangThai: "DA_TRA", phiTraTre: 0 },
+  { maHD: 5, maKH: 5, maXe: 7, maNV: 5, ngayThue: d("2026-09-10"), ngayTra: d("2026-09-15"), ngayTraThucTe: d("2026-09-15"), tienThue: 2500000, trangThai: "DA_TRA", phiTraTre: 0 },
+  { maHD: 6, maKH: 1, maXe: 6, maNV: 1, ngayThue: d("2026-09-15"), ngayTra: d("2026-09-18"), ngayTraThucTe: d("2026-09-18"), tienThue: 1500000, trangThai: "DA_TRA", phiTraTre: 0 },
+  { maHD: 7, maKH: 2, maXe: 3, maNV: 2, ngayThue: d("2026-11-15"), ngayTra: d("2026-11-20"), ngayTraThucTe: null, tienThue: 3500000, trangThai: "DANG_THUE", phiTraTre: 0 },
+  { maHD: 8, maKH: 4, maXe: 1, maNV: 3, ngayThue: d("2026-12-01"), ngayTra: d("2026-12-05"), ngayTraThucTe: null, tienThue: 2000000, trangThai: "DA_XAC_NHAN", phiTraTre: 0 },
+  { maHD: 9, maKH: 3, maXe: 5, maNV: 2, ngayThue: d("2026-12-10"), ngayTra: d("2026-12-12"), ngayTraThucTe: null, tienThue: 1100000, trangThai: "DA_HUY", phiTraTre: 0 },
 ];
 
 const thanhToanData = [
@@ -71,20 +75,24 @@ const thanhToanData = [
   { maTT: 3, maHD: 3, soTien: 1500000, phuongThuc: "TIEN_MAT", ngayTT: d("2026-09-08") },
   { maTT: 4, maHD: 4, soTien: 2200000, phuongThuc: "CHUYEN_KHOAN", ngayTT: d("2026-09-12") },
   { maTT: 5, maHD: 5, soTien: 2500000, phuongThuc: "CHUYEN_KHOAN", ngayTT: d("2026-09-15") },
-  { maTT: 6, maHD: 6, soTien: 1800000, phuongThuc: "CHUYEN_KHOAN", ngayTT: d("2026-09-15") },
-  { maTT: 7, maHD: 7, soTien: 3500000, phuongThuc: "TIEN_MAT", ngayTT: d("2026-09-20") },
-  { maTT: 8, maHD: 8, soTien: 3200000, phuongThuc: "CHUYEN_KHOAN", ngayTT: d("2026-09-22") },
+  { maTT: 6, maHD: 6, soTien: 1500000, phuongThuc: "CHUYEN_KHOAN", ngayTT: d("2026-09-15") },
+  { maTT: 7, maHD: 7, soTien: 2000000, phuongThuc: "TIEN_MAT", ngayTT: d("2026-11-15") },
+  { maTT: 8, maHD: 8, soTien: 1000000, phuongThuc: "CHUYEN_KHOAN", ngayTT: d("2026-11-16") },
+  { maTT: 9, maHD: 3, soTien: 750000, phuongThuc: "TIEN_MAT", ngayTT: d("2026-09-09") },
+  { maTT: 10, maHD: 9, soTien: 500000, phuongThuc: "CHUYEN_KHOAN", ngayTT: d("2026-11-10") },
+];
+
+const hoanTienData = [
+  { maHT: 1, maHD: 9, soTien: 500000, lyDo: "Huy hop dong truoc han - hoan 100%", ngayHT: d("2026-11-12") },
 ];
 
 const tinhTrangTraXeData = [
-  { maTinhTrang: 1, maHD: 1, ngayTra: d("2026-09-05"), tinhTrangXe: "Tot", mucNhienLieu: 80, soKmThucTe: 25300, ghiChu: "Xe hoat dong binh thuong" },
+  { maTinhTrang: 1, maHD: 1, ngayTra: d("2026-09-05"), tinhTrangXe: "Tot", mucNhienLieu: 80, soKmThucTe: 18300, ghiChu: "Xe hoat dong binh thuong" },
   { maTinhTrang: 2, maHD: 2, ngayTra: d("2026-09-07"), tinhTrangXe: "Tot", mucNhienLieu: 70, soKmThucTe: 32600, ghiChu: "Khong co hu hong" },
-  { maTinhTrang: 3, maHD: 3, ngayTra: d("2026-09-08"), tinhTrangXe: "Tot", mucNhienLieu: 75, soKmThucTe: 25400, ghiChu: "Xe sach se" },
+  { maTinhTrang: 3, maHD: 3, ngayTra: d("2026-09-09"), tinhTrangXe: "Tot", mucNhienLieu: 75, soKmThucTe: 25400, ghiChu: "Xe sach se" },
   { maTinhTrang: 4, maHD: 4, ngayTra: d("2026-09-12"), tinhTrangXe: "Tot", mucNhienLieu: 60, soKmThucTe: 22500, ghiChu: "Khong co van de" },
   { maTinhTrang: 5, maHD: 5, ngayTra: d("2026-09-15"), tinhTrangXe: "Kha", mucNhienLieu: 50, soKmThucTe: 12800, ghiChu: "Xuat hien vet xuoc nho" },
   { maTinhTrang: 6, maHD: 6, ngayTra: d("2026-09-18"), tinhTrangXe: "Tot", mucNhienLieu: 70, soKmThucTe: 28600, ghiChu: "Xe binh thuong" },
-  { maTinhTrang: 7, maHD: 7, ngayTra: d("2026-09-25"), tinhTrangXe: "Tot", mucNhienLieu: 65, soKmThucTe: 33800, ghiChu: "Khong co hu hong" },
-  { maTinhTrang: 8, maHD: 8, ngayTra: d("2026-09-27"), tinhTrangXe: "Kha", mucNhienLieu: 55, soKmThucTe: 36200, ghiChu: "Can kiem tra lop xe" },
 ];
 
 const baoTriData = [
@@ -105,6 +113,7 @@ const baoTriData = [
 // Xóa dữ liệu cũ: bảng con trước, bảng cha sau (ngược của khóa ngoại)
 async function clearAll() {
   await prisma.tinh_trang_tra_xe.deleteMany();
+  await prisma.hoan_tien.deleteMany();
   await prisma.thanh_toan.deleteMany();
   await prisma.bao_tri.deleteMany();
   await prisma.hop_dong.deleteMany();
@@ -122,6 +131,7 @@ async function seedAll() {
   await prisma.xe.createMany({ data: xeData });
   await prisma.hop_dong.createMany({ data: hopDongData });
   await prisma.thanh_toan.createMany({ data: thanhToanData });
+  await prisma.hoan_tien.createMany({ data: hoanTienData });
   await prisma.tinh_trang_tra_xe.createMany({ data: tinhTrangTraXeData });
   await prisma.bao_tri.createMany({ data: baoTriData });
 }

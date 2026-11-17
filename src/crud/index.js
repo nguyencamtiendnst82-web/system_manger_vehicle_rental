@@ -1,4 +1,4 @@
-// crud/index.js - Gom CRUD của 8 bảng về một chỗ
+// crud/index.js - Gom CRUD của 9 bảng về một chỗ
 //
 // Mỗi module đều có các hàm chuẩn: create, getAll, getById, update, remove.
 // Ngoài ra có thêm các hàm lọc/tìm kiếm riêng của từng bảng:
@@ -6,6 +6,7 @@
 //   khachHang      : getByCCCD, searchByName
 //   hopDong        : getDetail, getByCustomer, getByStatus
 //   thanhToan      : getByContract
+//   hoanTien       : getByContract
 //   baoTri         : getByVehicle
 //   tinhTrangTraXe : getByContract
 //
@@ -20,7 +21,8 @@ import * as nhanVien from "./nhanVien.js";
 import * as khachHang from "./khachHang.js";
 import * as hopDong from "./hopDong.js";
 import * as thanhToan from "./thanhToan.js";
+import * as hoanTien from "./hoanTien.js";
 import * as baoTri from "./baoTri.js";
 import * as tinhTrangTraXe from "./tinhTrangTraXe.js";
 
-export { loaiXe, xe, nhanVien, khachHang, hopDong, thanhToan, baoTri, tinhTrangTraXe };
+export { loaiXe, xe, nhanVien, khachHang, hopDong, thanhToan, hoanTien, baoTri, tinhTrangTraXe };

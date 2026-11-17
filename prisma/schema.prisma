@@ -1,7 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
   provider = "prisma-client"
@@ -19,7 +18,7 @@ model bao_tri {
   ngayBatDau  DateTime?          @db.Date
   ngayKetThuc DateTime?          @db.Date
   chiPhi      Decimal?           @default(0.00) @db.Decimal(15, 2)
-  trangThai   bao_tri_trangThai? @default(CHO_BAO_TRI)
+  trangThai   bao_tri_trangThai  @default(CHO_BAO_TRI)
   xe          xe                 @relation(fields: [maXe], references: [maXe], map: "fk_bt_xe")
 
   @@index([maXe], map: "fk_bt_xe")
@@ -33,17 +32,31 @@ model hop_dong {
   ngayThue          DateTime            @db.DateTime(0)
   ngayTra           DateTime            @db.DateTime(0)
   ngayTraThucTe     DateTime?           @db.DateTime(0)
-  tienThue          Decimal?            @default(0.00) @db.Decimal(15, 2)
-  trangThai         hop_dong_trangThai? @default(CHO_XAC_NHAN)
+  tienThue          Decimal             @default(0.00) @db.Decimal(15, 2)
+  phiTraTre         Decimal             @default(0.00) @db.Decimal(15, 2)
+  trangThai         hop_dong_trangThai  @default(CHO_XAC_NHAN)
   khach_hang        khach_hang          @relation(fields: [maKH], references: [maKH], map: "fk_hd_khachhang")
   nhan_vien         nhan_vien           @relation(fields: [maNV], references: [maNV], map: "fk_hd_nhanvien")
   xe                xe                  @relation(fields: [maXe], references: [maXe], map: "fk_hd_xe")
   thanh_toan        thanh_toan[]
-  tinh_trang_tra_xe tinh_trang_tra_xe[]
+  hoan_tien         hoan_tien[]
+  tinh_trang_tra_xe tinh_trang_tra_xe?
 
   @@index([maKH], map: "fk_hd_khachhang")
   @@index([maNV], map: "fk_hd_nhanvien")
-  @@index([maXe], map: "fk_hd_xe")
+  // Phục vụ kiểm tra trùng lịch; đồng thời là index cho khóa ngoại maXe
+  @@index([maXe, ngayThue, ngayTra])
+}
+
+model hoan_tien {
+  maHT     Int      @id @default(autoincrement())
+  maHD     Int
+  soTien   Decimal  @db.Decimal(15, 2)
+  lyDo     String?  @db.VarChar(255)
+  ngayHT   DateTime @default(now()) @db.DateTime(0)
+  hop_dong hop_dong @relation(fields: [maHD], references: [maHD], map: "fk_ht_hopdong")
+
+  @@index([maHD])
 }
 
 model khach_hang {
@@ -61,6 +74,7 @@ model loai_xe {
   maLoaiXe  Int    @id @default(autoincrement())
   tenLoaiXe String @db.VarChar(100)
   hangXe    String @db.VarChar(100)
+  giaThueNgay Decimal @default(0.00) @db.Decimal(15, 2)
   xe        xe[]
 }
 
@@ -85,15 +99,13 @@ model thanh_toan {
 
 model tinh_trang_tra_xe {
   maTinhTrang  Int      @id @default(autoincrement())
-  maHD         Int
+  maHD         Int      @unique(map: "maHD")
   ngayTra      DateTime @default(now()) @db.DateTime(0)
   tinhTrangXe  String?  @db.Text
   mucNhienLieu Int?
   soKmThucTe   Int?
   ghiChu       String?  @db.Text
   hop_dong     hop_dong @relation(fields: [maHD], references: [maHD], map: "fk_tttx_hopdong")
-
-  @@index([maHD], map: "fk_tttx_hopdong")
 }
 
 model xe {
@@ -102,7 +114,7 @@ model xe {
   bienSoXe   String        @unique(map: "bienSoXe") @db.VarChar(20)
   mauXe      String?       @db.VarChar(50)
   soKmDaChay Int?          @default(0)
-  trangThai  xe_trangThai? @default(SAN_SANG)
+  trangThai  xe_trangThai  @default(SAN_SANG)
   soCho      Int
   bao_tri    bao_tri[]
   hop_dong   hop_dong[]

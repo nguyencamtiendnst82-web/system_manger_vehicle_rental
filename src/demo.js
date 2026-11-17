@@ -52,6 +52,9 @@ async function demoBusiness() {
 
   section("Công nợ hợp đồng số 6");
   console.log(await cn.getContractBalance(6));
+
+  section("Cảnh báo: xe trả trễ ảnh hưởng hợp đồng sắp tới");
+  console.log(await cn.getAtRiskContracts());
 }
 
 // =====================================================

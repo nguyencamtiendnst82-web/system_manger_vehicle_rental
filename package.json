@@ -7,18 +7,22 @@
     "mariadb": "^3.5.4",
     "mysql2": "^3.24.5"
   },
-  "allowScripts": {
-    "prisma@7.10.1": true,
-    "@prisma/engines@7.10.1": true
-  },
   "devDependencies": {
     "jest": "^30.5.2",
     "prisma": "^7.10.1"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
   "scripts": {
-  "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js"
-}
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "generate": "prisma generate",
+    "seed": "node prisma/seed.js",
+    "demo": "node src/demo.js",
+    "test:integration": "node --test --test-concurrency=1 src/tests/integration/chucnang.integration.js"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "allowScripts": {
+    "prisma@7.10.1": true,
+    "@prisma/engines@7.10.1": true
+  }
 }

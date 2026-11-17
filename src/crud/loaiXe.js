@@ -5,7 +5,7 @@ import { prisma } from "../prismaClient.js";
 
 // ===== Create =====
 
-// Thêm loại xe. data = { tenLoaiXe, hangXe }
+// Thêm loại xe. data = { tenLoaiXe, hangXe, giaThueNgay }
 export function create(data) {
   return prisma.loai_xe.create({ data });
 }

@@ -28,7 +28,7 @@ export function getById(maHD, options = {}) {
   return prisma.hop_dong.findUnique({ where: { maHD }, ...options });
 }
 
-// Lấy chi tiết hợp đồng kèm khách hàng, xe, nhân viên, thanh toán, tình trạng trả xe
+// Lấy chi tiết hợp đồng kèm khách hàng, xe, nhân viên, thanh toán, hoàn tiền, tình trạng trả xe
 export function getDetail(maHD) {
   return prisma.hop_dong.findUnique({
     where: { maHD },
@@ -37,6 +37,7 @@ export function getDetail(maHD) {
       xe: true,
       nhan_vien: true,
       thanh_toan: true,
+      hoan_tien: true,
       tinh_trang_tra_xe: true,
     },
   });
