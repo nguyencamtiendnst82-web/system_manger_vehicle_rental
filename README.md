@@ -1,6 +1,8 @@
 # Hệ Thống Quản Lý Cho Thuê Xe (Vehicle Rental Management)
 
-Dự án quản lý cho thuê xe được xây dựng bằng **Node.js** (chuẩn ES Modules), kết nối cơ sở dữ liệu **MySQL** thông qua **Prisma ORM 7**, cùng bộ kiểm thử tự động toàn diện bằng **Jest**.
+Dự án quản lý cho thuê xe được xây dựng bằng **Node.js** (ES Modules), kết nối **MySQL/MariaDB** qua **Prisma ORM 7**. Mã nguồn hiện gồm các module CRUD, nghiệp vụ cho thuê xe, chương trình demo chạy trên terminal và bộ kiểm thử tự động.
+
+> **Phạm vi hiện tại:** đây là dự án Node.js chạy bằng dòng lệnh; chưa có giao diện web, API HTTP hay phân quyền người dùng.
 
 ---
 
@@ -19,7 +21,7 @@ Dự án quản lý cho thuê xe được xây dựng bằng **Node.js** (chuẩ
 
 ## 📖 Giới Thiệu
 
-Hệ thống cung cấp giải pháp quản lý toàn diện quy trình cho thuê xe:
+Các chức năng đã triển khai hỗ trợ những phần chính của quy trình cho thuê xe:
 - Quản lý thông tin xe, tình trạng sẵn sàng, bảo dưỡng.
 - Quản lý hồ sơ khách hàng và nhân viên.
 - Quản lý vòng đời hợp đồng thuê xe: từ lúc đặt lịch, xác nhận, bàn giao xe cho đến khi trả xe.
@@ -42,7 +44,7 @@ Hệ thống cung cấp giải pháp quản lý toàn diện quy trình cho thu�
 
 ```text
 cong_nghe_phan_mem/
-├── .env                  # Tệp cấu hình chuỗi kết nối MySQL bí mật
+├── .env                  # Tạo cục bộ; cấu hình kết nối (không đưa lên Git)
 ├── .env.example          # Tệp mẫu hướng dẫn cấu hình môi trường
 ├── package.json          # Quản lý thư viện phụ thuộc và script chạy
 ├── prisma.config.ts      # Cấu hình Prisma 7 (Prisma CLI tự nhận)
@@ -52,8 +54,11 @@ cong_nghe_phan_mem/
 │
 ├── prisma/               # Cấu hình cơ sở dữ liệu Prisma
 │   ├── schema.prisma     # Định nghĩa các bảng, cột và quan hệ
-│   ├── seed.js           # Kịch bản nạp dữ liệu mẫu ban đầu
+│   ├── seed.js           # Nạp dữ liệu mẫu vào database test riêng
 │   └── migrations/       # Lịch sử cập nhật cấu trúc database
+│
+├── docs/
+│   └── test-cases.md     # Danh sách/mô tả ca kiểm thử
 │
 ├── generated/            # Mã nguồn Prisma Client tự động sinh ra
 │
@@ -62,6 +67,7 @@ cong_nghe_phan_mem/
     ├── db.js             # Kiểm tra kết nối cơ sở dữ liệu
     ├── chucnang.js       # Toàn bộ logic nghiệp vụ cốt lõi
     ├── demo.js           # Chương trình chạy thử nghiệm các chức năng
+    ├── testDatabaseSafety.js # Kiểm tra URL trước khi seed/xóa dữ liệu test
     │
     ├── crud/             # Tầng CRUD Thêm - Đọc - Sửa - Xóa 9 bảng
     │   ├── index.js      # Gom toàn bộ module CRUD
@@ -76,98 +82,107 @@ cong_nghe_phan_mem/
     │   └── tinhTrangTraXe.js # Thao tác bảng tình trạng trả xe
     │
     └── tests/            # Bộ kiểm thử tự động
-        ├── chucnang.test.js # 81 ca test nghiệp vụ & thống kê (Jest Mock)
-        ├── crud.test.js     # 23 ca test tầng CRUD (Jest Mock)
+        ├── chucnang.test.js # 97 test nghiệp vụ & thống kê (Jest Mock)
+        ├── crud.test.js     # 23 test tầng CRUD (Jest Mock)
+        ├── testDatabaseSafety.test.js # 10 test kiểm tra an toàn database
         └── integration/
-            └── chucnang.integration.js # 25 ca test trên MySQL thật (node:test)
+            └── chucnang.integration.js # 26 test tích hợp (node:test)
 ```
+
+Thư mục `generated/` được Prisma tạo ra khi chạy `npx prisma generate`; không cần tự tạo hoặc chỉnh sửa thủ công.
 
 ---
 
 ## 💻 Yêu Cầu Hệ Thống
 
-Trước khi bắt đầu, hãy đảm bảo máy tính của bạn đã cài đặt:
-1. **Node.js**: Phiên bản **22.18 trở lên** (Prisma Client sinh ra file `.ts` và được import trực tiếp; Node thấp hơn sẽ lỗi). Kiểm tra: `node -v`.
-2. **Hệ quản trị CSDL MySQL 8.0.16+ / MariaDB 10.2.1+** (để ràng buộc CHECK có hiệu lực): Cài đặt thông qua XAMPP, Laragon hoặc MySQL Community Server.
-3. **Trình soạn thảo mã nguồn**: Visual Studio Code, Cursor, Windsurf,...
+Trước khi bắt đầu, cần có:
+1. **Node.js 22.18 trở lên** và npm. Prisma Client được sinh có file TypeScript được import trực tiếp. Kiểm tra trong Command Prompt (CMD):
+   ```cmd
+   node --version
+   npm --version
+   ```
+2. **MySQL 8.0.16+ hoặc MariaDB 10.2.1+** để các ràng buộc `CHECK` có hiệu lực. Có thể dùng MySQL Community Server, XAMPP hoặc Laragon.
+3. **Git** (nếu clone dự án) và một trình soạn thảo như Visual Studio Code.
+
+Các lệnh bên dưới dùng CMD trên Windows. Nếu dùng PowerShell và gặp lỗi chặn `npm.ps1`/`npx.ps1`, dùng `npm.cmd`/`npx.cmd` thay vì thay đổi Execution Policy.
 
 ---
 
 ## ⚙️ Hướng Dẫn Cài Đặt & Cấu Hình
 
-### Bước 1: Cài đặt các thư viện phụ thuộc
-Mở terminal tại thư mục gốc của dự án và chạy:
-```bash
+### Bước 1: Cài thư viện
+Mở CMD tại thư mục gốc dự án:
+```cmd
 npm install
 ```
 
-### Bước 2: Tạo cơ sở dữ liệu trong MySQL
-Khởi động MySQL (ví dụ: nhấn **Start** MySQL trong bảng điều khiển XAMPP).
-Mở phần mềm quản lý (như phpMyAdmin, MySQL Workbench, DBeaver) và chạy lệnh tạo database:
+### Bước 2: Tạo database và cấu hình kết nối
+Khởi động dịch vụ MySQL/MariaDB, sau đó tạo database rỗng bằng MySQL Workbench, phpMyAdmin hoặc câu lệnh:
 ```sql
-CREATE DATABASE IF NOT EXISTS manager_vehicle_rent CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE manager_vehicle_rent
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
 ```
-*(Nếu muốn tạo bảng và dữ liệu mẫu bằng SQL thuần, bạn có thể copy nội dung trong tệp `cauLenhSQL.txt` để thực thi).*
 
-### Bước 3: Cấu hình tệp `.env`
-Tạo hoặc mở tệp `.env` tại thư mục gốc và điền chuỗi kết nối MySQL của bạn theo mẫu:
+Tạo file `.env` ở thư mục gốc (có thể sao chép `.env.example`) và cấu hình:
 ```env
-DATABASE_URL="mysql://<user>:<password>@<host>:<port>/<ten_database>"
+DATABASE_URL="mysql://root:mat_khau_cua_ban@localhost:3306/manager_vehicle_rent"
 ```
-**Ví dụ thực tế:**
-```env
-DATABASE_URL="mysql://root:<mat_khau>@localhost:3306/manager_vehicle_rent"
-```
-*   `root`: Tên tài khoản MySQL.
-*   `<mat_khau>`: Mật khẩu tài khoản MySQL của bạn (nếu không có mật khẩu thì để trống: `root:@localhost...`). **Không commit file `.env`** (đã nằm trong `.gitignore`).
-*   `3306`: Cổng kết nối MySQL.
-*   `manager_vehicle_rent`: Tên database vừa tạo ở Bước 2.
+Nếu tài khoản không có mật khẩu, dùng `mysql://root:@localhost:3306/manager_vehicle_rent`. Thay user, mật khẩu, host, port và tên database theo máy của bạn. Nếu mật khẩu chứa ký tự đặc biệt như `@`, `#`, `/` hoặc `:`, hãy URL-encode mật khẩu trước khi đưa vào URL. Không chia sẻ hoặc commit `.env`.
 
-### Bước 4: Đồng bộ Prisma và nạp dữ liệu mẫu
-1. Sinh mã nguồn Prisma Client:
-```bash
-npx prisma generate
-```
-2. Tạo database kiểm thử riêng, ví dụ `manager_vehicle_rent_test`, và giữ `DATABASE_URL` trong `.env` trỏ tới database ứng dụng khác.
-3. Trong một terminal riêng, đặt `TEST_DATABASE_URL`, đặt `DATABASE_URL` tạm thời bằng URL kiểm thử, rồi áp dụng migration:
+### Bước 3: Tạo cấu trúc database
+Chọn **một** trong hai cách sau cho database vừa tạo:
+
+**Cách A — Prisma migrations (khuyến nghị khi phát triển):**
 ```cmd
-set TEST_DATABASE_URL=mysql://root:<mat_khau>@localhost:3306/manager_vehicle_rent_test
-set DATABASE_URL=%TEST_DATABASE_URL%
-set ALLOW_DESTRUCTIVE_TEST_DB=YES
+npx prisma generate
 npx prisma migrate deploy
 ```
-4. Mở terminal mới để `DATABASE_URL` được nạp lại từ `.env`; chỉ đặt URL kiểm thử và xác nhận thao tác phá hủy trước khi nạp dữ liệu mẫu:
+Lệnh migration tạo các bảng theo lịch sử trong `prisma/migrations/`. Cách này không tự thêm dữ liệu mẫu.
+
+**Cách B — Tạo database kèm dữ liệu demo bằng SQL:**
+Thực thi toàn bộ file `cauLenhSQL.txt` trong MySQL Workbench hoặc công cụ tương đương. File này tạo database `manager_vehicle_rent`, các bảng và dữ liệu mẫu. Chỉ chạy trên database mới/rỗng. Sau đó cấu hình `DATABASE_URL` trỏ tới database này và chạy:
 ```cmd
-set TEST_DATABASE_URL=mysql://root:<mat_khau>@localhost:3306/manager_vehicle_rent_test
-set ALLOW_DESTRUCTIVE_TEST_DB=YES
-npm run seed
+npx prisma generate
 ```
-*(Tệp seed chỉ chạy trên database riêng có token `test` trong tên và khác database ứng dụng. Tệp sẽ xóa dữ liệu cũ trong 9 bảng trước khi tạo lại dữ liệu mẫu.)*
+Không chạy `prisma migrate deploy` lên database vừa tạo bằng file SQL: database đó chưa có lịch sử migration của Prisma. Không chạy cả hai cách trên cùng một database.
+
+### Bước 4: Kiểm tra kết nối và chạy demo
+```cmd
+node src/db.js
+npm run demo
+```
+Nếu chọn Cách A, database có schema nhưng chưa có dữ liệu; demo vẫn chạy nhưng một số danh sách/kết quả sẽ trống. Nếu muốn xem dữ liệu mẫu, chọn Cách B. Lệnh `npm run seed` **chỉ dành cho database kiểm thử riêng** theo hướng dẫn ở phần kiểm thử tích hợp, không dùng để nạp dữ liệu vào database ứng dụng.
 
 ---
 
 ## 🚀 Hướng Dẫn Sử Dụng & Chạy Dự Án
 
 ### 1. Kiểm tra kết nối cơ sở dữ liệu
-Chạy tệp `src/db.js` để kiểm tra Node.js đã kết nối được tới MySQL chưa:
-```bash
+Lệnh này kiểm tra Node.js có kết nối tới database trong `.env` hay không:
+```cmd
 node src/db.js
 ```
-*   **Thành công:** Màn hình sẽ thông báo `Kết nối MySQL thành công!` và in ra danh sách dữ liệu bảng `bao_tri`.
-*   **Thất bại:** Kiểm tra lại tài khoản, mật khẩu hoặc cổng port trong file `.env`.
+* **Thành công:** Chương trình thông báo kết nối thành công và đọc dữ liệu bảng `bao_tri`.
+* **Thất bại:** Kiểm tra MySQL đang chạy, database đã được tạo, và `DATABASE_URL` trong `.env` chính xác.
 
 ### 2. Chạy thử nghiệm các chức năng (Demo)
-Chạy tệp `src/demo.js` để xem chương trình mô phỏng các hoạt động thực tế:
-```bash
-node src/demo.js
+Chạy demo trên terminal:
+```cmd
+npm run demo
 ```
-Chương trình sẽ tự động truy vấn và in ra các bảng kết quả:
-*   Danh sách các xe đang ở trạng thái sẵn sàng cho thuê (`SAN_SANG`).
-*   Tìm kiếm khách hàng theo tên.
-*   Xem chi tiết hợp đồng và các lần thanh toán.
-*   Thống kê số lượng xe theo trạng thái.
-*   Báo cáo doanh thu theo 12 tháng trong năm.
-*   Kiểm tra số dư/công nợ của hợp đồng.
+Demo hiển thị xe sẵn sàng, tìm khách hàng, chi tiết hợp đồng/thanh toán, thống kê trạng thái xe, doanh thu theo tháng, công nợ và cảnh báo xe có nguy cơ trễ. Đây là chương trình đọc dữ liệu mẫu, không phải giao diện ứng dụng.
+
+### 3. Các lệnh thường dùng
+| Mục đích | Lệnh |
+|---|---|
+| Sinh Prisma Client sau khi cài dependencies hoặc thay đổi schema | `npx prisma generate` |
+| Áp dụng migration chưa chạy lên database trong `DATABASE_URL` | `npx prisma migrate deploy` |
+| Kiểm tra kết nối database | `node src/db.js` |
+| Chạy demo terminal | `npm run demo` |
+| Chạy unit test | `npm test` |
+| Chạy unit test và tạo báo cáo coverage | `npm run test:coverage` |
+| Chạy test tích hợp trên database test riêng | `npm run test:integration` |
 
 ---
 
@@ -204,63 +219,113 @@ flowchart LR
 
 > Các tỷ lệ/thời hạn phí trả trễ và hoàn tiền nằm ở hằng số đầu `src/chucnang.js` (`LATE_GRACE_MINUTES`, `LATE_FEE_RATE`, `FULL_REFUND_HOURS`, `LATE_CANCEL_REFUND_RATE`, `TURNAROUND_BUFFER_HOURS`), cần xác nhận lại với yêu cầu thực tế.
 >
-> **Chưa làm:** hoàn tiền thủ công ngoài luồng hủy, hoàn khi trả xe sớm, phân quyền/UI/API.
+> **Chưa triển khai:** hoàn tiền thủ công ngoài luồng hủy, hoàn khi trả xe sớm, phân quyền, giao diện người dùng và API HTTP.
 
 ---
 
 ## 🧪 Bộ Kiểm Thử Tự Động (Unit Test)
 
-Dự án trang bị bộ Unit Test chuẩn chỉ với **Jest**, sử dụng kỹ thuật **Mock Prisma** (kiểm thử hoàn toàn tách biệt, không phụ thuộc và không làm thay đổi dữ liệu trong MySQL thật).
+Dự án có bộ Unit Test viết bằng **Jest**, sử dụng kỹ thuật **Mock Prisma** (kiểm thử hoàn toàn tách biệt, không phụ thuộc và không làm thay đổi dữ liệu trong MySQL thật).
 
 ### 1. Unit test (Jest + Mock Prisma, không cần MySQL)
-```bash
+```cmd
 npm test
 ```
-*   `src/tests/chucnang.test.js`: **91** ca (UT01–UT91) cho nghiệp vụ và thống kê.
-*   `src/tests/crud.test.js`: **23** ca (CR00–CR14; mỗi module 1 ca cho 5 hàm chuẩn + các hàm lọc riêng) cho toàn bộ tầng CRUD của 9 bảng.
+*   `src/tests/chucnang.test.js`: **97** ca cho nghiệp vụ và thống kê.
+*   `src/tests/crud.test.js`: **23** ca cho tầng CRUD của 9 bảng.
 *   `src/tests/testDatabaseSafety.test.js`: **10** ca kiểm tra rào an toàn trước thao tác xóa dữ liệu.
-*   Tổng theo các file hiện tại: **124** ca.
+*   Tổng unit test hiện tại: **130** ca.
 *   **Bao phủ:** kiểm tra hợp lệ dữ liệu, ràng buộc trạng thái, giao dịch và cập nhật liên bảng, phí trả trễ, hoàn tiền, thời gian đệm, đổi xe, cảnh báo xe trả trễ, các hàm lọc/tìm kiếm của CRUD.
 *   Vì chạy trên mock nên **không bắt được** lỗi SQL thật hay tranh chấp dữ liệu thật; việc khóa dòng chỉ được kiểm tra là *có gọi*. Phần đó do test tích hợp bên dưới đảm nhận.
 
 ### 2. Test tích hợp trên MySQL thật (`node:test`, 26 ca)
 Kiểm tra những thứ mock không làm được: nhiều người đặt cùng một xe / thanh toán cùng lúc, ràng buộc CHECK/UNIQUE/RESTRICT của DB, vòng đời hợp đồng end-to-end, và **tính nhất quán của dữ liệu mẫu** (`prisma/seed.js`).
 
-> ⚠️ File này **xóa sạch dữ liệu 9 bảng**. Bắt buộc dùng database riêng có chữ `test` trong tên; nếu không, test sẽ dừng ngay.
+> ⚠️ File này **xóa sạch dữ liệu 9 bảng** trong database kiểm thử. Bắt buộc dùng database riêng có token `test` trong tên; nếu không, test sẽ dừng ngay.
 > Cần đặt `ALLOW_DESTRUCTIVE_TEST_DB=YES`; test cũng từ chối nếu `TEST_DATABASE_URL` trỏ cùng host, port và database với `DATABASE_URL`.
 
-Tạo database test và chạy migration trong một terminal riêng:
+Tạo database test riêng (không dùng database có dữ liệu cần giữ) bằng MySQL Workbench hoặc CMD:
 ```cmd
 mysql -u root -p -e "CREATE DATABASE manager_vehicle_rent_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```
+
+Mở **CMD thứ nhất** để áp dụng migrations lên database test. URL trong lệnh này chỉ có hiệu lực trong cửa sổ CMD đó:
+```cmd
 set TEST_DATABASE_URL=mysql://root:<mat_khau>@localhost:3306/manager_vehicle_rent_test
 set DATABASE_URL=%TEST_DATABASE_URL%
-set ALLOW_DESTRUCTIVE_TEST_DB=YES
 npx prisma migrate deploy
 ```
 
-Sau đó mở terminal mới. Đảm bảo `DATABASE_URL` được nạp từ `.env` và khác database test; không đặt `DATABASE_URL` thành `TEST_DATABASE_URL` trong terminal này:
+Mở **CMD thứ hai** tại thư mục dự án. Không đặt `DATABASE_URL` thành URL test ở cửa sổ này: integration test phải đối chiếu database test với database ứng dụng trong `.env`.
 ```cmd
 set TEST_DATABASE_URL=mysql://root:<mat_khau>@localhost:3306/manager_vehicle_rent_test
 set ALLOW_DESTRUCTIVE_TEST_DB=YES
 npm run test:integration
 ```
-(Có thể tạo database bằng MySQL Workbench thay cho lệnh `mysql`.) Nếu không đặt `TEST_DATABASE_URL`, toàn bộ test tích hợp tự động bị bỏ qua.
+Nếu không đặt `TEST_DATABASE_URL`, test tích hợp sẽ tự động bị bỏ qua. Có thể dùng cùng các biến môi trường để chạy `npm run seed` trên database test; thao tác seed xóa dữ liệu hiện có trong 9 bảng trước khi nạp lại dữ liệu mẫu. Không chạy seed/test tích hợp trên database cần giữ dữ liệu.
+
+Danh sách và mô tả test case được lưu trong [`docs/test-cases.md`](docs/test-cases.md).
+
+### 3. Hướng dẫn chạy Integration Test bằng CMD
+
+Integration Test kết nối tới database kiểm thử riêng `manager_vehicle_rent_test`; không dùng database chính `manager_vehicle_rent`. Bộ test xóa dữ liệu trong các bảng của database đích, vì vậy **không chạy trên database chính hoặc database có dữ liệu cần giữ**.
+
+#### Bước 1: Tạo database kiểm thử
+
+Nếu chưa có, mở MySQL Workbench, kết nối tới MySQL và chạy:
+```sql
+CREATE DATABASE manager_vehicle_rent_test
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+```
+
+#### Bước 2: Áp dụng migration lần đầu
+
+Mở **CMD thứ nhất** tại thư mục dự án:
+```cmd
+cd /d <thư mục dự án>
+set "TEST_DATABASE_URL=mysql://root:<MAT_KHAU_MYSQL>@localhost:3306/manager_vehicle_rent_test"
+set "ALLOW_DESTRUCTIVE_TEST_DB=YES"
+set "DATABASE_URL=%TEST_DATABASE_URL%"
+npx prisma migrate deploy
+```
+Thay `<MAT_KHAU_MYSQL>` bằng mật khẩu MySQL thực tế; không ghi mật khẩu thật vào README hoặc chia sẻ công khai. Lệnh migration phải chạy sau khi đã đặt `TEST_DATABASE_URL`. Do cấu hình Prisma CLI đọc `DATABASE_URL`, hai biến cần được đặt như trên để migration áp dụng vào database kiểm thử, không phải database chính. Chỉ cần áp dụng migration khi database test chưa có cấu trúc hoặc cần cập nhật schema.
+
+#### Bước 3: Chạy Integration Test
+
+Mở **CMD thứ hai** tại thư mục dự án. Thiết lập lại hai biến trong cửa sổ này; không đặt `DATABASE_URL` thành URL kiểm thử. Ứng dụng sẽ đọc `DATABASE_URL` chính từ `.env`, còn Integration Test sử dụng `TEST_DATABASE_URL`:
+```cmd
+cd /d <thư mục dự án>
+set "TEST_DATABASE_URL=mysql://root:<MAT_KHAU_MYSQL>@localhost:3306/manager_vehicle_rent_test"
+set "ALLOW_DESTRUCTIVE_TEST_DB=YES"
+npm run test:integration
+```
+Thay `<MAT_KHAU_MYSQL>` bằng mật khẩu MySQL thực tế. Các biến môi trường chỉ có hiệu lực trong cửa sổ CMD nơi đã thiết lập chúng.
+
+#### Bước 4: Chạy Unit Test
+
+Unit Test dùng mock Prisma, không cần MySQL và không xóa dữ liệu:
+```cmd
+npm test
+```
+
+#### Kết quả kiểm thử
+
+- **Unit Test:** 130/130 PASS theo bộ test hiện tại (97 test nghiệp vụ, 23 test CRUD và 10 test an toàn database).
+- **Integration Test:** 26/26 PASS theo kết quả được cung cấp cho dự án. Có thể chạy lại theo các bước trên để xác nhận trên database kiểm thử.
+
+> Nếu gặp thông báo `Chưa đặt TEST_DATABASE_URL, bỏ qua test tích hợp`, hãy thiết lập lại cả `TEST_DATABASE_URL` và `ALLOW_DESTRUCTIVE_TEST_DB=YES` trong **chính cửa sổ CMD hiện tại**, sau đó chạy lại lệnh test. Không chạy Integration Test trên `manager_vehicle_rent` hoặc database chính khác.
 
 ---
 
 ## ❓ Xử Lý Một Số Lỗi Thường Gặp
 
-### 1. Lỗi PowerShell `PSSecurityException` khi chạy `npm`
-*   **Hiện tượng:** `File C:\Program Files\nodejs\npm.ps1 cannot be loaded because running scripts is disabled...`
-*   **Nguyên nhân:** Windows chặn thực thi script trong PowerShell.
-*   **Cách xử lý 1:** Chạy lệnh thông qua CMD:
-    ```bash
-    cmd /c npm test
-    ```
-*   **Cách xử lý 2 (Khuyến nghị):** Mở PowerShell với quyền Administrator và chạy lệnh mở khóa:
-    ```powershell
-    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-    ```
+### 1. PowerShell báo `PSSecurityException` khi chạy `npm` hoặc `npx`
+Windows có thể chặn các script `.ps1`. Không cần thay đổi Execution Policy; dùng CMD hoặc gọi trực tiếp:
+```powershell
+npm.cmd test
+npx.cmd prisma generate
+```
 
 ### 2. Lỗi kết nối CSDL `Access denied for user...` hoặc `ECONNREFUSED`
 *   Đảm bảo dịch vụ MySQL đang được bật.
@@ -272,9 +337,14 @@ npm run test:integration
 ### 3. Lỗi không tìm thấy Prisma Client (`Cannot find module .../client.ts`) hoặc lỗi import `.ts`
 *   Kiểm tra `node -v` ≥ 22.18.
 *   Chạy lại lệnh sinh mã của Prisma:
-    ```bash
+    ```cmd
     npx prisma generate
     ```
+
+### 4. Lỗi database chưa có bảng hoặc migration thất bại
+* Kiểm tra `DATABASE_URL` đang trỏ đúng database.
+* Với database tạo theo Prisma, chạy `npx prisma migrate deploy`.
+* Với database đã khởi tạo từ `cauLenhSQL.txt`, không chạy migration Prisma lên database đó; hãy tạo database mới nếu muốn chuyển sang luồng migration.
 
 ---
 

@@ -43,19 +43,24 @@ const HOUR_MS = 60 * 60 * 1000;
 // ----- Thời gian đệm giữa hai hợp đồng liên tiếp của cùng một xe -----
 // Dành cho vệ sinh/kiểm tra xe và chống rủi ro trả trễ nhẹ: hợp đồng sau chỉ được
 // bắt đầu sau khi hợp đồng trước kết thúc ít nhất TURNAROUND_BUFFER_HOURS giờ.
+// Ví dụ: xe trả lúc 08:00 thì lịch tiếp theo sớm nhất là 12:00.
 const TURNAROUND_BUFFER_HOURS = 4;
 const BUFFER_MS = TURNAROUND_BUFFER_HOURS * HOUR_MS;
 
 // ----- Chính sách phí trả trễ -----
 // Trả trễ quá LATE_GRACE_MINUTES phút so với ngày trả dự kiến thì tính phí:
 //   số giờ trễ (làm tròn lên) x (giá thuê ngày / 24) x LATE_FEE_RATE
+// Ví dụ: trễ 60 phút trở xuống không tính phí; 60 phút + 1 ms được làm tròn thành 2 giờ.
 const LATE_GRACE_MINUTES = 60;
+// Ví dụ: giá thuê 480.000đ/ngày tương đương 20.000đ/giờ; nhân 1,5 thành 30.000đ/giờ.
 const LATE_FEE_RATE = 1.5;
 
 // ----- Chính sách hoàn tiền khi hủy hợp đồng -----
 // - Hợp đồng chưa xác nhận, hoặc hủy trước giờ thuê >= FULL_REFUND_HOURS giờ: hoàn 100%
 // - Hủy muộn hơn: hoàn LATE_CANCEL_REFUND_RATE (giữ lại phần còn lại làm phí hủy)
+// Ví dụ: hủy trước đúng 24 giờ được hoàn đủ; thiếu 1 ms thì áp dụng mức hoàn muộn.
 const FULL_REFUND_HOURS = 24;
+// Ví dụ: đã trả 600.000đ mà hủy muộn thì được hoàn 420.000đ.
 const LATE_CANCEL_REFUND_RATE = 0.7;
 
 // =====================================================
@@ -116,6 +121,7 @@ function calcRentalFee(from, to, giaThueNgay) {
 }
 
 // Phí trả trễ (đồng, làm tròn). Trả trong thời gian ân hạn hoặc đúng hạn thì = 0.
+// Chức năng: tính phí trả xe trễ | Dùng khi: khách trả xe sau giờ hẹn.
 export function calcLateFee(ngayTra, ngayTraThucTe, giaThueNgay) {
   const lateMs = new Date(ngayTraThucTe) - new Date(ngayTra);
   if (!(lateMs > LATE_GRACE_MINUTES * 60 * 1000)) return 0;
@@ -124,6 +130,7 @@ export function calcLateFee(ngayTra, ngayTraThucTe, giaThueNgay) {
 }
 
 // Tỷ lệ hoàn tiền (0-1) khi hủy hợp đồng ở thời điểm `now`
+// Chức năng: chọn tỷ lệ hoàn tiền | Dùng khi: hủy hợp đồng trước giờ thuê.
 export function calcRefundRate(trangThai, ngayThue, now = new Date()) {
   if (trangThai === "CHO_XAC_NHAN") return 1;
   return new Date(ngayThue) - now >= FULL_REFUND_HOURS * HOUR_MS ? 1 : LATE_CANCEL_REFUND_RATE;
@@ -161,6 +168,7 @@ async function hasScheduleConflict(db, maXe, from, to, excludeMaHD) {
 
 // Tìm các xe có thể thuê trong khoảng thời gian (không bảo trì/ngừng hoạt động
 // và không trùng lịch, tính cả thời gian đệm). Có thể lọc thêm theo loại xe (maLoaiXe).
+// Chức năng: tìm xe còn trống | Dùng khi: khách chọn ngày thuê và loại xe.
 export async function findAvailableVehicles(rentDate, returnDate, maLoaiXe) {
   const { from, to } = parseRange(rentDate, returnDate);
   const busyContracts = await prisma.hop_dong.findMany({
@@ -183,6 +191,7 @@ export async function findAvailableVehicles(rentDate, returnDate, maLoaiXe) {
 
 // Đặt xe: tạo hợp đồng ở trạng thái CHO_XAC_NHAN.
 // Nếu không truyền tienThue, hệ thống tự tính theo giá thuê ngày của loại xe.
+// Chức năng: tạo hợp đồng thuê mới | Dùng khi: khách đặt xe.
 export async function createContract({ maKH, maXe, maNV, ngayThue, ngayTra, tienThue }) {
   const { from, to } = parseRange(ngayThue, ngayTra);
   if (tienThue != null && !(Number.isFinite(Number(tienThue)) && Number(tienThue) >= 0)) {
@@ -219,6 +228,7 @@ export async function createContract({ maKH, maXe, maNV, ngayThue, ngayTra, tien
 }
 
 // Xác nhận hợp đồng: CHO_XAC_NHAN -> DA_XAC_NHAN (đổi trạng thái nguyên tử)
+// Chức năng: xác nhận hợp đồng | Dùng khi: nhân viên duyệt yêu cầu đặt xe.
 export async function confirmContract(maHD) {
   const { count } = await prisma.hop_dong.updateMany({
     where: { maHD, trangThai: "CHO_XAC_NHAN" },
@@ -232,6 +242,7 @@ export async function confirmContract(maHD) {
 }
 
 // Giao xe cho khách: hợp đồng -> DANG_THUE, xe -> DANG_THUE
+// Chức năng: ghi nhận giao xe | Dùng khi: khách nhận xe theo hợp đồng.
 export async function handOverVehicle(maHD) {
   return prisma.$transaction(async (tx) => {
     const contract = await getContractOrThrow(tx, maHD);
@@ -258,6 +269,7 @@ export async function handOverVehicle(maHD) {
 
 // Nhận xe trả: ghi tình trạng, cập nhật km, đưa xe về SAN_SANG, tính phí trả trễ (nếu có)
 // info = { tinhTrangXe, mucNhienLieu (0-100), soKmThucTe (>= km hiện tại), ghiChu }
+// Chức năng: ghi nhận xe được trả | Dùng khi: khách bàn giao xe cho nhân viên.
 export async function returnVehicle(maHD, info = {}) {
   const { mucNhienLieu = null, soKmThucTe = null } = info;
   if (mucNhienLieu != null && !(Number.isInteger(mucNhienLieu) && mucNhienLieu >= 0 && mucNhienLieu <= 100)) {
@@ -313,6 +325,7 @@ export async function returnVehicle(maHD, info = {}) {
 // Trả về { hopDong, hoanTien } (hoanTien = null nếu khách chưa thanh toán gì).
 // options.loiCongTy = true: hủy do lỗi phía công ty (không có xe giao, xe trả trễ...)
 // -> luôn hoàn 100%, không áp dụng phí hủy muộn.
+// Chức năng: hủy hợp đồng và tính khoản hoàn | Dùng khi: hợp đồng chưa giao xe.
 export async function cancelContract(maHD, options = {}) {
   return prisma.$transaction(async (tx) => {
     await lockContract(tx, maHD);
@@ -354,6 +367,7 @@ export async function cancelContract(maHD, options = {}) {
 // Đổi xe cho hợp đồng chưa giao (vd xe cũ trả trễ, hỏng): giữ nguyên tiền thuê.
 // Điều kiện: xe mới sẵn sàng, không trùng lịch (kể cả đệm), số chỗ không ít hơn xe cũ,
 // và không thuộc hạng đắt hơn trừ khi options.nangCapMienPhi = true (nâng hạng miễn phí).
+// Chức năng: đổi xe cho hợp đồng | Dùng khi: xe đã đặt không thể giao đúng hẹn.
 export async function reassignVehicle(maHD, maXeMoi, options = {}) {
   return prisma.$transaction(async (tx) => {
     const contract = await getContractOrThrow(tx, maHD);
@@ -399,6 +413,7 @@ export async function reassignVehicle(maHD, maXeMoi, options = {}) {
 // hợp đồng đang thuê của xe đó sắp/đã quá hạn trả (tính cả thời gian đệm).
 // Mỗi phần tử: { hopDongSapToi, hopDongDangThue, quaHan, soGioTre, xeSanSangDuKien }
 // -> nhân viên xử lý bằng reassignVehicle (đổi xe), dời lịch hoặc cancelContract({ loiCongTy: true }).
+// Chức năng: tìm lịch có nguy cơ trễ | Dùng khi: nhân viên cần xử lý sớm lịch giao xe.
 export async function getAtRiskContracts() {
   const now = new Date();
   const renting = await prisma.hop_dong.findMany({
@@ -438,6 +453,7 @@ export async function getAtRiskContracts() {
 // Công nợ của một hợp đồng: tiền thuê + phí trả trễ - (đã thanh toán - đã hoàn).
 // Hợp đồng đã hủy không còn nợ (conNo = 0).
 // db: prisma (mặc định) hoặc tx khi gọi trong transaction.
+// Chức năng: tính số tiền còn nợ | Dùng khi: xem công nợ hoặc kiểm tra trước khi thu tiền.
 export async function getContractBalance(maHD, db = prisma) {
   const contract = await getContractOrThrow(db, maHD);
   const paid = sumOf(await db.thanh_toan.aggregate({ where: { maHD }, _sum: { soTien: true } }));
@@ -449,6 +465,7 @@ export async function getContractBalance(maHD, db = prisma) {
 }
 
 // Ghi nhận thanh toán (không cho trả vượt quá tiền thuê, không nhận cho hợp đồng đã hủy)
+// Chức năng: lưu một khoản thanh toán | Dùng khi: khách trả tiền cho hợp đồng.
 export async function addPayment(maHD, soTien, phuongThuc) {
   if (!(typeof soTien === "number" && Number.isFinite(soTien) && soTien > 0)) {
     throw new Error("Số tiền phải lớn hơn 0");
@@ -476,6 +493,7 @@ export async function addPayment(maHD, soTien, phuongThuc) {
 // ----- 1.3 Bảo trì -----
 
 // Bắt đầu bảo trì xe: xe -> DANG_BAO_TRI
+// Chức năng: mở phiếu bảo trì | Dùng khi: xe cần sửa hoặc kiểm tra.
 export async function startMaintenance(maXe, noiDung, chiPhi = 0) {
   if (!(Number.isFinite(Number(chiPhi)) && Number(chiPhi) >= 0)) {
     throw new Error("Chi phí bảo trì không hợp lệ");
@@ -516,6 +534,7 @@ export async function startMaintenance(maXe, noiDung, chiPhi = 0) {
 }
 
 // Hoàn thành bảo trì: xe -> SAN_SANG (chỉ khi xe đang bảo trì và không còn phiếu mở khác)
+// Chức năng: đóng phiếu bảo trì | Dùng khi: xe đã sửa xong.
 export async function completeMaintenance(maBT, chiPhi) {
   if (chiPhi != null && !(Number.isFinite(Number(chiPhi)) && Number(chiPhi) >= 0)) {
     throw new Error("Chi phí bảo trì không hợp lệ");
@@ -554,6 +573,7 @@ export async function completeMaintenance(maBT, chiPhi) {
 // =====================================================
 
 // Số xe theo từng trạng thái
+// Chức năng: đếm xe theo trạng thái | Dùng khi: hiển thị thống kê đội xe.
 export async function countVehiclesByStatus() {
   const result = await prisma.xe.groupBy({
     by: ["trangThai"],
@@ -563,6 +583,7 @@ export async function countVehiclesByStatus() {
 }
 
 // Doanh thu thực thu (tiền đã thanh toán - tiền đã hoàn) theo 12 tháng của một năm
+// Chức năng: tổng hợp doanh thu từng tháng | Dùng khi: lập báo cáo năm.
 export async function getMonthlyRevenue(year) {
   const range = { gte: new Date(year, 0, 1), lt: new Date(year + 1, 0, 1) };
   const payments = await prisma.thanh_toan.findMany({ where: { ngayTT: range } });
@@ -578,6 +599,7 @@ export async function getMonthlyRevenue(year) {
 }
 
 // Chi phí bảo trì theo từng xe
+// Chức năng: cộng chi phí bảo trì theo xe | Dùng khi: xem xe nào tốn chi phí sửa chữa.
 export async function getMaintenanceCostByVehicle() {
   const result = await prisma.bao_tri.groupBy({
     by: ["maXe"],
@@ -592,6 +614,7 @@ export async function getMaintenanceCostByVehicle() {
 }
 
 // Các xe được thuê nhiều nhất
+// Chức năng: xếp hạng xe được thuê nhiều | Dùng khi: xem thống kê xe phổ biến.
 export async function getMostRentedVehicles(top = 5) {
   const result = await prisma.hop_dong.groupBy({
     by: ["maXe"],
@@ -604,6 +627,7 @@ export async function getMostRentedVehicles(top = 5) {
 }
 
 // Hợp đồng quá hạn: đang thuê nhưng đã quá ngày trả dự kiến
+// Chức năng: tìm hợp đồng quá hạn | Dùng khi: nhắc nhân viên liên hệ khách.
 export function getOverdueContracts() {
   return prisma.hop_dong.findMany({
     where: { trangThai: "DANG_THUE", ngayTra: { lt: new Date() } },
